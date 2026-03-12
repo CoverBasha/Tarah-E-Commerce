@@ -1,0 +1,6 @@
+@Tarah.Identity_HostAddress = http://localhost:5039
+
+GET {{Tarah.Identity_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

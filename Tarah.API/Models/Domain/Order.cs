@@ -1,0 +1,11 @@
+﻿namespace Tarah.API.Models.Domain
+{
+    public class Order
+    {
+        public Guid Id { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public decimal TotalPrice { get; set; }
+        public List<OrderItem> Items { get; set; }
+
+    }
+}
