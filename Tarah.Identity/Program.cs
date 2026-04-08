@@ -25,7 +25,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+options.UseSqlServer(builder.Configuration.GetConnectionString("Identity")));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -70,9 +70,14 @@ builder.Services.AddMassTransit(x =>
             h.Password("guest");
         });
     });
+
+    x.AddEntityFrameworkOutbox<AuthDbContext>(o =>
+    {
+        o.UseSqlServer();
+        o.UseBusOutbox();
+    });
+    
 });
-
-
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<AuthDbContext>()

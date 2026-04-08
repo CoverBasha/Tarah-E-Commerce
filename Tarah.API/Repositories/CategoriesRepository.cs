@@ -16,5 +16,10 @@ namespace Tarah.API.Repositories
         {
             return await context.Categories.ToListAsync();
         }
+
+        public async Task<List<Category>> GetByIds(IEnumerable<Guid> ids)
+        {
+            return await context.Categories.Where(c => ids.Contains(c.Id)).ToListAsync();
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace Tarah.API.Services
         {
             this.context = context;
         }
-        public async Task CreateProfiles(Guid id)
+        public async Task CreateProfiles(Guid id, string username)
         {
             if (context.Customers.Any(c => c.Id == id))
                 return;
@@ -36,7 +36,7 @@ namespace Tarah.API.Services
 
             await context.Customers.AddAsync(customer);
             await context.Sellers.AddAsync(seller);
-
+            await context.LocalUsers.AddAsync(new LocalUser { Id = id, Username = username });
             await context.SaveChangesAsync();
         }
 
@@ -48,8 +48,12 @@ namespace Tarah.API.Services
             var seller = await context.Sellers.SingleOrDefaultAsync(s => s.Id == id);
             if (seller == null) return;
 
+            var localUser = await context.LocalUsers.SingleOrDefaultAsync(u => u.Id == id);
+
             context.Customers.Remove(customer);
             context.Sellers.Remove(seller);
+            context.LocalUsers.Remove(localUser);
+            await context.DeletedUsers.AddAsync(new DeletedUser { UserId = id, DeletedAt = DateTime.UtcNow });
             await context.SaveChangesAsync();
         }
     }
@@ -64,7 +68,7 @@ namespace Tarah.API.Services
         }
         public async Task Consume(ConsumeContext<UserCreated> context)
         {
-            await service.CreateProfiles(context.Message.UserId);
+            await service.CreateProfiles(context.Message.UserId, context.Message.Username);
         }
     }
 

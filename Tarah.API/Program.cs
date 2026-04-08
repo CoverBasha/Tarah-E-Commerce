@@ -34,11 +34,18 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
 builder.Services.AddScoped<ICategoriesRepository,CategoriesRepository>();
 builder.Services.AddScoped<ICartsRepository, CartsRepository>();
+builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
+builder.Services.AddScoped<OrdersService>();
 builder.Services.AddScoped<CheckoutTransaction>();
 builder.Services.AddScoped<ProductsService>();
 builder.Services.AddScoped<CategoriesService>();
 builder.Services.AddScoped<ProfilesService>();
+builder.Services.AddScoped<IdentityService>();
 builder.Services.AddScoped<CartsService>();
+
+builder.Services.AddScoped<HttpClient>();
+builder.Services.AddHttpContextAccessor();
+
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
@@ -117,6 +124,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionHandler>();
+
+app.UseMiddleware<CheckUserExists>();
 
 app.UseStaticFiles();
 

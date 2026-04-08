@@ -61,13 +61,13 @@ namespace Tarah.API.Services
 
         public async Task<ServiceResponse<bool>> AddToCart(Guid productId, int quantity, Guid userId)
         {
+            if (quantity < 1)
+                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity can't be less than 1" };
             var product = await productsRepository.GetByIdAsync(productId);
-
             if (product is null)
                 return new ServiceResponse<bool> { Status = Status.NotFound, Message = "Product not found" };
-
             if (product.Stock < quantity)
-                return new ServiceResponse<bool> { Status = Status.Error, Message = "Quantity exceeds stock" };
+                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity exceeds stock" };
 
             var cart = await GetCart(userId);
             var item = cart.Items.SingleOrDefault(i => i.ProductId == productId);
@@ -87,7 +87,7 @@ namespace Tarah.API.Services
 
             return new ServiceResponse<bool>
             {
-                Status = success ? Status.Success : Status.Error,
+                Status = success ? Status.Success : Status.Forbidden,
                 Result = success,
                 Message = success ? "Product modified successfully" : "Cart not found"
             };
@@ -99,16 +99,17 @@ namespace Tarah.API.Services
 
             if (product is null)
                 return new ServiceResponse<bool> { Status = Status.NotFound, Message = "Product not found" };
-
             if (quantity > product.Stock)
-                return new ServiceResponse<bool> { Status = Status.Error, Message = "Quantity exceeds stock" };
+                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity exceeds stock" };
+            if (quantity + product.Stock < 1)
+                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity can't be less than 1" };
 
             var cart = await cartsRepository.GetCart(userId);
             var success = await cartsRepository.ModifyItemCount(cart, product, quantity);
 
             return new ServiceResponse<bool>
             {
-                Status = success ? Status.Success : Status.Error,
+                Status = success ? Status.Success : Status.Forbidden,
                 Result = success,
                 Message = success ? "Item modified" : "Product doesn't exist in your cart"
             };
@@ -157,7 +158,7 @@ namespace Tarah.API.Services
             {
                 return new ServiceResponse<OrderDto>
                 {
-                    Status = Status.Error,
+                    Status = Status.Forbidden,
                     Message = ex.Message,
                 };
             }

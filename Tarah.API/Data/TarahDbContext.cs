@@ -14,6 +14,8 @@ namespace Tarah.API.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<CategoryItem> CategoryItems { get; set; }
+        public DbSet<DeletedUser> DeletedUsers { get; set; }
+        public DbSet<LocalUser> LocalUsers { get; set; }
 
 
         public TarahDbContext(DbContextOptions<TarahDbContext> options) : base(options) { }

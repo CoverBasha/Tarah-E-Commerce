@@ -37,7 +37,7 @@ namespace Tarah.API.Controllers
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var response = await service.AddToCart(productId, quantity, userId);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
@@ -54,7 +54,7 @@ namespace Tarah.API.Controllers
 
             var response = await service.ModifyProductCount(productId, quantity, userId);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
@@ -98,7 +98,7 @@ namespace Tarah.API.Controllers
 
             var response = await service.Checkout(userId);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);

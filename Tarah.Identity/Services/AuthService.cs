@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using MassTransit;
 using Tarah.Contracts.Events;
+using Tarah.Identity.Data;
 
 namespace Tarah.Identity.Services
 {
@@ -12,11 +13,13 @@ namespace Tarah.Identity.Services
     {
         private readonly IConfiguration config;
         private readonly IPublishEndpoint publishEndpoint;
+        private readonly AuthDbContext context;
 
-        public AuthService(IConfiguration config, IPublishEndpoint publishEndpoint)
+        public AuthService(IConfiguration config, IPublishEndpoint publishEndpoint, AuthDbContext context)
         {
             this.config = config;
             this.publishEndpoint = publishEndpoint;
+            this.context = context;
         }
         public string CreateToken(IdentityUser user)
         {
@@ -45,17 +48,19 @@ namespace Tarah.Identity.Services
         public async Task PublishUser(IdentityUser user)
         {
             var userId = Guid.Parse(user.Id);
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            await publishEndpoint.Publish(new UserCreated(userId), cts.Token);
+            await publishEndpoint.Publish(new UserCreated(userId, user.UserName));
+
+            await context.SaveChangesAsync();
         }
         
         public async Task DeleteUser(IdentityUser user)
         {
             var userId = Guid.Parse(user.Id);
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            await publishEndpoint.Publish(new UserDeleted(userId),cts.Token);
+            await publishEndpoint.Publish(new UserDeleted(userId));
+
+            await context.SaveChangesAsync();
         }
     }
 }

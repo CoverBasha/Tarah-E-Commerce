@@ -37,13 +37,15 @@ namespace Tarah.Identity.Controllers
 
             var result = await userManager.CreateAsync(user, dto.Password);
 
-            if(result.Succeeded)
+            if(!result.Succeeded)
             {
+                return BadRequest(result.Errors);
                 _ = Task.Run(async () => await service.PublishUser(user));
-                return Ok("Registered Successfully");
             }
 
-            return BadRequest(result.Errors);
+            await service.PublishUser(user);
+
+            return Ok("Registered Successfully");
         }
 
         [HttpPost]
@@ -76,15 +78,15 @@ namespace Tarah.Identity.Controllers
             if (user is null)
                 return NotFound("User not found");
 
-            var deleterResult = await userManager.DeleteAsync(user);
+            var deleteResult = await userManager.DeleteAsync(user);
 
-            if (deleterResult.Succeeded)
+            if (deleteResult.Succeeded)
             {
                 await service.DeleteUser(user);
                 return Ok("User deleted Successfully");
             }
 
-            return BadRequest(deleterResult.Errors);
+            return BadRequest(deleteResult.Errors);
         }
     }
 }

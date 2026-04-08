@@ -22,7 +22,7 @@ namespace Tarah.API.Service
             this.mapper = mapper;
         }
 
-        public async Task<ServiceResponse<ListProductsDto>> AllProductsAsync(Guid categoryId,int page, int pageSize)
+        public async Task<ServiceResponse<ListProductsDto>> AllProductsAsync(Guid? categoryId,int page, int pageSize)
         {
             page = Math.Max(page, 1);
             pageSize = Math.Min(pageSize, 20);
@@ -54,43 +54,74 @@ namespace Tarah.API.Service
 
         public async Task<ServiceResponse<ProductDto>> AddProductAsync(AddProductDto dto,Guid userId)
         {
-            if (userId == Guid.Empty)
+            if (dto.Price < dto.PriceAfterSale)
                 return new ServiceResponse<ProductDto>
                 {
                     Status = Status.Forbidden,
-                    Message = "Anonymous request"
+                    Message = "Price after sale can't be higher than price"
+                };
+            if (dto.CategoryIds.IsNullOrEmpty())
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.Forbidden,
+                    Message = "Product should have atleast one category"
                 };
 
             var product = mapper.Map<Product>(dto);
+            
+            product.SellerId = userId;
 
-            if(!dto.CategoryIds.IsNullOrEmpty())
-            {
-                var existingCats = await categoriesRepository.AllCategories();
+            var categories = await categoriesRepository.GetByIds(dto.CategoryIds);
+            if (!categories.Any())
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.NotFound,
+                    Message = "Categories not found"
+                };
 
-                product.Categories = existingCats
-                    .Where(c => dto.CategoryIds.Any(i => c.Id == i))
-                    .Select(c => new CategoryItem
-                    {
-                        CategoryId = c.Id,
-                    })
-                    .ToList();
-            }
+            product.Categories = categories
+                .Select(c => new CategoryItem { CategoryId = c.Id })
+                .ToList();
+
+            #region Save Images
 
             foreach (var image in dto.Images)
             {
                 var validation = isValidImage(image);
                 if (!validation.Result)
-                    return new ServiceResponse<ProductDto> { Message = validation.Message };
+                    return new ServiceResponse<ProductDto>
+                    {
+                        Status = Status.Forbidden,
+                        Message = validation.Message
+                    };
             }
 
             var images = new List<string>();
             foreach (var image in dto.Images)
-                images.Add(await productsRepository.SaveImage(image));
+            {
+                var name = await productsRepository.SaveImage(image);
+                product.Images.Add(name);
+                images.Add(name);
+            }
 
-            product.Images = images;
-            product.SellerId = userId;
+            #endregion
 
-            var response = await productsRepository.AddProductAsync(product);
+            Product response = new();
+            try
+            {
+                response = await productsRepository.AddProductAsync(product);
+            }
+            catch (Exception ex)
+            {
+                foreach(var image in images)
+                    productsRepository.DeleteImage(image);
+
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.Forbidden,
+                    Message = ex.Message
+                };
+            }
 
             return response != null ?
                 new ServiceResponse<ProductDto>
@@ -100,74 +131,117 @@ namespace Tarah.API.Service
                 } :
                 new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Error,
+                    Status = Status.Forbidden,
                     Message = "Something went wrong"
                 };
         }
 
-        public async Task<ServiceResponse<ProductDto>> UpdateProductAsync(Guid id, UpdateProductDto dto,Guid userId)
+        public async Task<ServiceResponse<ProductDto>> UpdateProductAsync(Guid id, UpdateProductDto dto, Guid userId)
         {
+            if (dto.Price < dto.PriceAfterSale)
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.Forbidden,
+                    Message = "Price after sale can't be higher than price"
+                };
+
             var productInDb = await productsRepository.GetByIdAsync(id);
 
-            if (productInDb==null)
+            if (productInDb == null)
                 return new ServiceResponse<ProductDto>
                 {
                     Status = Status.NotFound,
                     Message = "Product not found"
                 };
-
             if (productInDb.SellerId != userId)
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Unauthorized,
                     Message = "You don't own this product"
                 };
+            if (dto.CategoryIds.IsNullOrEmpty())
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.Forbidden,
+                    Message = "Product should have atleast one category"
+                };
 
-            var imagesToAdd = dto.Images
-                .Where(i =>
-                !productInDb.Images.Any(dbimg => dbimg == i.FileName))
+            mapper.Map(dto, productInDb);
+
+            var categories = await categoriesRepository.GetByIds(dto.CategoryIds);
+            if (!categories.Any())
+                return new ServiceResponse<ProductDto>
+                {
+                    Status = Status.NotFound,
+                    Message = "Categories not found"
+                };
+
+            productInDb.Categories = categories
+                .Select(c => new CategoryItem { CategoryId = c.Id })
                 .ToList();
-            var imagesToDelete = productInDb.Images
-                .Where(dbimg =>
-                !dto.Images.Any(i => i.FileName == dbimg))
-                .ToList();
-            foreach ( var image in imagesToAdd )
+
+            #region Images Operations
+
+            var incomingFilesByName = dto.Images
+                .ToDictionary(i => i.FileName.Trim().ToLower(), i => i);
+
+            var incomingNames = incomingFilesByName.Keys.ToHashSet();
+
+            var existingNames = productInDb.Images
+                .Select(i => i.Trim().ToLower())
+                .ToHashSet();
+
+            var toAdd = incomingNames.Except(existingNames);
+            var toDelete = existingNames.Except(incomingNames);
+
+            foreach (var name in toAdd)
             {
-                var validation = isValidImage(image);
-                if (validation.Status == Status.Error)
+                var validation = isValidImage(incomingFilesByName[name]);
+                if (validation.Status == Status.Forbidden)
                     return new ServiceResponse<ProductDto>
                     {
                         Status = validation.Status,
                         Message = validation.Message
                     };
-
-                productInDb.Images.Add(
-                    await productsRepository.SaveImage(image));
             }
-            foreach( var image in imagesToDelete )
+            var addedImages = new List<string>();
+
+            foreach (var name in toAdd)
             {
-                productsRepository.DeleteImage(image);
-                productInDb.Images.Remove(image);
+                var saved = await productsRepository.SaveImage(incomingFilesByName[name]);
+                productInDb.Images.Add(saved);
+                addedImages.Add(name);
             }
 
-            if (!dto.CategoryIds.IsNullOrEmpty())
+            try
             {
-                var existingCats = await categoriesRepository.AllCategories();
+                await productsRepository.UpdateProductAsync();
+            }
+            catch (Exception ex)
+            {
+                foreach (var name in addedImages)
+                    productsRepository.DeleteImage(name);
 
-                productInDb.Categories = existingCats.Select(c => new CategoryItem
+                return new ServiceResponse<ProductDto>
                 {
-                    CategoryId = c.Id,
-                }).ToList();
+                    Status = Status.Forbidden,
+                    Message = ex.Message
+                };
             }
 
-            productInDb = mapper.Map<Product>(dto);
+            foreach (var name in toDelete)
+            {
 
-            var response = await productsRepository.UpdateProductAsync(id, productInDb);
+                productsRepository.DeleteImage(name);
+                productInDb.Images.Remove(name);
+            }
+
+            #endregion
 
             return new ServiceResponse<ProductDto>
             {
                 Status = Status.Success,
-                Result = mapper.Map<ProductDto>(response),
+                Result = mapper.Map<ProductDto>(productInDb),
             };
         }
 
@@ -184,7 +258,7 @@ namespace Tarah.API.Service
             if (product.SellerId != userId)
                 return new ServiceResponse<bool>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Unauthorized,
                     Message = "You don't own this product"
                 };
 
@@ -202,7 +276,7 @@ namespace Tarah.API.Service
             if (file.Length > 5242880)
                 return new ServiceResponse<bool>()
                 {
-                    Status = Status.Error,
+                    Status = Status.Forbidden,
                     Message = "Image larger than 5MB"
                 };
 
@@ -212,7 +286,7 @@ namespace Tarah.API.Service
             if (!supported.Any(item => item.Equals(extension, StringComparison.OrdinalIgnoreCase)))
                 return new ServiceResponse<bool>()
                 {
-                    Status = Status.Error,
+                    Status = Status.Forbidden,
                     Message = "File not supported, only .jpg, .png, .jpeg"
                 };
 

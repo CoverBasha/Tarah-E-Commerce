@@ -21,15 +21,15 @@ namespace Tarah.API.Controllers
         [HttpGet]
         public async Task<IActionResult> All(Guid? categoryId,int? pageNumber, int? pageSize)
         {
-            var response = await service.AllProductsAsync(categoryId ?? Guid.Empty, pageNumber ?? 1, pageSize ?? 10);
+            var response = await service.AllProductsAsync(categoryId, pageNumber ?? 1, pageSize ?? 10);
 
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
 
             return Ok(response.Result);
@@ -44,10 +44,10 @@ namespace Tarah.API.Controllers
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
 
             return Ok(response.Result);
@@ -65,10 +65,10 @@ namespace Tarah.API.Controllers
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
 
             return CreatedAtAction(nameof(GetById), new { id = response.Result.Id }, response.Result);
@@ -86,10 +86,10 @@ namespace Tarah.API.Controllers
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
 
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
 
             return Ok(response.Result);
@@ -106,13 +106,14 @@ namespace Tarah.API.Controllers
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
             
-            if (response.Status == Status.Error)
+            if (response.Status == Status.Forbidden)
                 return BadRequest(response.Message);
             
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
 
             return Ok(response.Result);
         }
+
     }
 }

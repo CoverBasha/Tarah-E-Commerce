@@ -1,5 +1,6 @@
 ﻿using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Net;
+using Tarah.API.Data;
 
 namespace Tarah.API.Middleware
 {

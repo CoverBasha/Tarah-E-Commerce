@@ -15,17 +15,17 @@ namespace Tarah.API.Repositories
             this.context = context;
         }
 
-        public async Task<PagedResult<Product>> GetProductsAsync(Guid categoryId, int page, int pageSize)
+        public async Task<PagedResult<Product>> GetProductsAsync(Guid? categoryId, int page, int pageSize)
         {
             IQueryable<Product> query = context.Products;
 
-            if (categoryId != Guid.Empty)
+            if (categoryId != null)
                 query = query.Where(c => c.Categories.Any(i => i.CategoryId == categoryId));
 
             decimal pages = await query.CountAsync();
             pages /= pageSize;
 
-            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+            query = query.Skip((page - 1) * pageSize).Take(pageSize).Include(c => c.Categories).ThenInclude(c => c.Category);
 
             return new PagedResult<Product>
             {
@@ -50,15 +50,9 @@ namespace Tarah.API.Repositories
             return product;
         }
 
-        public async Task<Product> UpdateProductAsync(Guid id, Product product)
+        public async Task UpdateProductAsync()
         {
-            var productInDb = await context.Products.SingleOrDefaultAsync(p => p.Id == id);
-
-            productInDb = product;
-
             await context.SaveChangesAsync();
-
-            return productInDb;
         }
 
         public async Task<bool> DeleteAsync(Product product)
@@ -94,9 +88,22 @@ namespace Tarah.API.Repositories
                 File.Delete(file);
         }
 
-        public async Task Commit()
+        public async Task<PagedResult<Product>> ProductsByUserAsync(Guid userId, int page, int pageSize)
         {
-            await context.SaveChangesAsync();
+            IQueryable<Product> query = context.Products;
+
+            query = query.Where(p => p.SellerId == userId);
+
+            decimal pages = await query.CountAsync();
+            pages /= pageSize;
+
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+            return new PagedResult<Product>
+            {
+                Items = await query.ToListAsync(),
+                TotalPages = (int)Math.Ceiling(pages)
+            };
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tarah.API.Data;
 
@@ -11,9 +12,11 @@ using Tarah.API.Data;
 namespace Tarah.API.Migrations
 {
     [DbContext(typeof(TarahDbContext))]
-    partial class TarahDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329011456_added user id for Order")]
+    partial class addeduseridforOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,35 +101,6 @@ namespace Tarah.API.Migrations
                     b.HasIndex("CartId");
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("Tarah.API.Models.Domain.DeletedUser", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("DeletedUsers");
-                });
-
-            modelBuilder.Entity("Tarah.API.Models.Domain.LocalUser", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LocalUsers");
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.Order", b =>
