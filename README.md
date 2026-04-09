@@ -14,6 +14,15 @@ The platform follows a microservices architecture, where each service is respons
 
 Services communicate using asynchronous messaging rather than direct service-to-service HTTP calls. This approach improves scalability, resilience, and service independence.
 
+### System Architecture
+![System Architecture](/docs/Tarah System Architecture.png)
+
+### Sequence Diagram (User Registration Flow)
+![Sequence Diagram](/docs/Sequence Diagram.png)
+
+### Entity Relationship Diagram (ERD)
+![ERD](/docs/ERD.png)
+
 ### Key Principles
 
 - Loose coupling between services  

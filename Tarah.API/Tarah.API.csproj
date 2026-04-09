@@ -25,11 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\Images\Corleone.png" />
+    <ProjectReference Include="..\Tarah.Contracts\Tarah.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tarah.Contracts\Tarah.Contracts.csproj" />
+    <Folder Include="wwwroot\Images\" />
   </ItemGroup>
 
 </Project>
