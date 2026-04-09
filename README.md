@@ -1,55 +1,91 @@
 # Tarah E-Commerce Platform
 
-A microservices-based e-commerce backend built with **.NET Core**, designed to explore distributed systems, event-driven architecture, and asynchronous service communication.
+A microservices-based e-commerce backend built with **.NET Core**, focused on exploring real-world distributed systems challenges such as consistency, reliability, and service decoupling.
 
-This project also serves as a consolidated application of everything I have learned in backend development so far, including API design, messaging systems, and service architecture.
+What started as a simple backend evolved into a practical exploration of microservices, where each design decision led to deeper considerations around communication patterns, failure handling, and data consistency.
 
-The system is composed of independent services that communicate through **RabbitMQ using MassTransit**, enabling loosely coupled workflows for order processing, inventory updates, and other business events.
+The system is composed of independent services that communicate through **RabbitMQ using MassTransit**, enabling loosely coupled workflows and event-driven interactions.
 
 ---
 
 ## Architecture
 
-The platform follows a microservices architecture, where each service is responsible for a specific business capability.
+The platform follows a microservices architecture with clear separation between:
 
-Services communicate using asynchronous messaging rather than direct service-to-service HTTP calls. This approach improves scalability, resilience, and service independence.
+- **Identity Service** (authentication & user data)
+- **Business Service** (products, carts, orders, etc.)
 
-### Key Principles
+Each service owns its data and communicates using a mix of **asynchronous events** and **synchronous requests** where appropriate.
 
-- Loose coupling between services  
-- Event-driven communication  
-- Clear service boundaries  
-- Asynchronous workflows  
+### Key Design Decisions
 
-Messaging is handled through **RabbitMQ**, while **MassTransit** provides an abstraction layer for message publishing and consumption.
+- Event-driven communication for cross-service workflows  
+- No shared database between services  
+- Explicit service boundaries and responsibilities  
+- Combination of sync (HTTP) and async (messaging) communication  
 
 ---
 
-## Core Concepts
+## Core Concepts & Challenges
 
 ### Event-Driven Communication
 
-Services publish and consume domain events through RabbitMQ to coordinate workflows such as:
+Cross-service workflows are handled using events via RabbitMQ.
 
-- Order placement  
-- Inventory updates  
-- Order processing  
+Example:
+- User registration → `UserRegistered` event → cart initialization in the business service
 
-This allows services to react to events without direct dependencies.
-
----
-
-### Message Contracts
-
-Services communicate using shared message contracts, ensuring a consistent structure for events exchanged between services.
-
-This enables services to evolve independently while maintaining compatibility.
+This allows services to react to changes without tight coupling.
 
 ---
 
-### Asynchronous Workflows
+### Reliable Messaging (Outbox Pattern)
 
-Operations that span multiple services are handled asynchronously using events, allowing the system to remain responsive while processing complex workflows in the background.
+To avoid message loss during failures, the system uses the **MassTransit Outbox pattern**.
+
+This ensures that:
+- Database changes and event publishing are coordinated  
+- Messages are not lost if failures occur after persistence  
+
+---
+
+### Atomicity & Consistency
+
+Several non-trivial consistency challenges were addressed:
+
+- **Database + Event Publishing Atomicity**  
+  Ensuring that events are only published if the corresponding database operation succeeds  
+
+- **Database + File System Atomicity**  
+  Handling product image uploads in a way that avoids orphaned files or inconsistent state during failures  
+
+---
+
+### Eventual Consistency
+
+The system is designed around **eventual consistency** rather than tightly coupled synchronous operations.
+
+This allows:
+- Better service independence  
+- More resilient workflows  
+- Reduced cascading failures  
+
+---
+
+### Fault Tolerance & Fallbacks
+
+To improve resilience and maintain loose coupling:
+
+- Services can **fall back to lazy loading strategies** when the message broker is unavailable  
+- Critical operations are not tightly dependent on real-time event delivery  
+
+---
+
+### Token Invalidation
+
+Authentication is not based solely on token expiration:
+
+- Token invalidation mechanisms are implemented to handle logout and security scenarios more reliably  
 
 ---
 
@@ -75,12 +111,18 @@ Operations that span multiple services are handled asynchronously using events, 
 This project was built to explore:
 
 - Designing microservices-based systems  
-- Implementing event-driven communication  
-- Handling service-to-service messaging  
-- Structuring loosely coupled distributed services  
+- Handling real-world consistency challenges  
+- Implementing reliable messaging patterns (Outbox)  
+- Managing tradeoffs between synchronous and asynchronous communication  
+- Building loosely coupled and resilient services  
 
 ---
 
 ## Project Status
 
-The platform is currently in active development as new services and workflows are being implemented.
+The project is continuously evolving.
+
+Future improvements include:
+- Performance testing and optimization  
+- Further resilience improvements  
+- Refining existing workflows as new concepts are explored  
