@@ -16,13 +16,13 @@ The platform follows a microservices architecture with clear separation between:
 - **Business Service** (products, carts, orders, etc.)
 
 ### System Architecture
-![System Architecture](/docs/Tarah System Architecture.png)
+![System Architecture](/docs/Architecture.jpg)
 
 ### Sequence Diagram (User Registration Flow)
-![Sequence Diagram](/docs/Sequence Diagram.png)
+![Sequence Diagram](/docs/Sequence.jpg)
 
 ### Entity Relationship Diagram (ERD)
-![ERD](/docs/ERD.png)
+![ERD](/docs/ERD.jpg)
 
 ### Key Principles
 Each service owns its data and communicates using a mix of **asynchronous events** and **synchronous requests** where appropriate.
