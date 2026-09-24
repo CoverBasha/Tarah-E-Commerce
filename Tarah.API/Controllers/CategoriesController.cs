@@ -31,7 +31,7 @@ namespace Tarah.API.Controllers
         [Route("{categoryId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetProductsByCategory([FromRoute] Guid categoryId)
+        public IActionResult GetProductsByCategory([FromRoute] Guid categoryId)
         {
             return RedirectToAction(nameof(GetProductsByCategory), categoryId);
         }

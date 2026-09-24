@@ -9,6 +9,9 @@ using Tarah.API.Middleware;
 using Tarah.API.Services;
 using MassTransit;
 using Microsoft.OpenApi.Models;
+using Hangfire;
+using Tarah.API.Services.Jobs;
+using Hangfire.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +19,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<TarahDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(
+        builder.Configuration.GetConnectionString("HangfireConnection")));
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddScoped<DeletedUsersCleanupJob>();
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -45,7 +58,6 @@ builder.Services.AddScoped<CartsService>();
 
 builder.Services.AddScoped<HttpClient>();
 builder.Services.AddHttpContextAccessor();
-
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
@@ -113,6 +125,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -122,6 +137,30 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseCors("Dev");
 }
+
+var timeZone = TimeZoneInfo.FindSystemTimeZoneById(
+    OperatingSystem.IsWindows()
+        ? "Egypt Standard Time"
+        : "Africa/Cairo");
+
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider
+        .GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.AddOrUpdate(
+        "deleted-users-cleanup",
+        Job.FromExpression<DeletedUsersCleanupJob>(
+            job => job.ExecuteAsync()),
+        Cron.Daily(0, 0),
+        new RecurringJobOptions
+        {
+            TimeZone = timeZone
+        });
+}
+
+
+app.UseHangfireDashboard("/hangfire");
 
 app.UseMiddleware<GlobalExceptionHandler>();
 

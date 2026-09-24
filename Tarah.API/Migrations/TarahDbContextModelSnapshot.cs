@@ -33,7 +33,7 @@ namespace Tarah.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.CartItem", b =>
@@ -51,7 +51,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.Category", b =>
@@ -66,7 +66,7 @@ namespace Tarah.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.CategoryItem", b =>
@@ -81,7 +81,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("CategoryItems");
+                    b.ToTable("CategoryItems", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.CustomerProfile", b =>
@@ -97,7 +97,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.DeletedUser", b =>
@@ -111,7 +111,7 @@ namespace Tarah.API.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("DeletedUsers");
+                    b.ToTable("DeletedUsers", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.LocalUser", b =>
@@ -126,7 +126,7 @@ namespace Tarah.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LocalUsers");
+                    b.ToTable("LocalUsers", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.Order", b =>
@@ -151,7 +151,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("CustomerProfileId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.OrderItem", b =>
@@ -180,7 +180,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.Product", b =>
@@ -228,7 +228,7 @@ namespace Tarah.API.Migrations
 
                     b.HasIndex("SellerProfileId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.SellerProfile", b =>
@@ -239,7 +239,7 @@ namespace Tarah.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sellers");
+                    b.ToTable("Sellers", (string)null);
                 });
 
             modelBuilder.Entity("Tarah.API.Models.Domain.CartItem", b =>
