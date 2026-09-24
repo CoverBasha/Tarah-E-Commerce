@@ -2,6 +2,7 @@
 using Tarah.API.Models.Domain;
 using Tarah.API.Models.DTOs;
 using Tarah.API.Repositories;
+using static Tarah.API.Repositories.CheckoutTransaction;
 
 namespace Tarah.API.Services
 {
@@ -62,12 +63,12 @@ namespace Tarah.API.Services
         public async Task<ServiceResponse<bool>> AddToCart(Guid productId, int quantity, Guid userId)
         {
             if (quantity < 1)
-                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity can't be less than 1" };
+                return new ServiceResponse<bool> { Status = Status.Error, Message = "Quantity can't be less than 1" };
             var product = await productsRepository.GetByIdAsync(productId);
             if (product is null)
                 return new ServiceResponse<bool> { Status = Status.NotFound, Message = "Product not found" };
             if (product.Stock < quantity)
-                return new ServiceResponse<bool> { Status = Status.Forbidden, Message = "Quantity exceeds stock" };
+                return new ServiceResponse<bool> { Status = Status.Error, Message = "Quantity exceeds stock" };
 
             var cart = await GetCart(userId);
             var item = cart.Items.SingleOrDefault(i => i.ProductId == productId);
@@ -87,7 +88,7 @@ namespace Tarah.API.Services
 
             return new ServiceResponse<bool>
             {
-                Status = success ? Status.Success : Status.Forbidden,
+                Status = success ? Status.Success : Status.NotFound,
                 Result = success,
                 Message = success ? "Product modified successfully" : "Cart not found"
             };
@@ -158,7 +159,7 @@ namespace Tarah.API.Services
             {
                 return new ServiceResponse<OrderDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = ex is NotFoundException ? Status.NotFound : Status.Error,
                     Message = ex.Message,
                 };
             }

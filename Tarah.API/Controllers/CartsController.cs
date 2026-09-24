@@ -17,9 +17,13 @@ namespace Tarah.API.Controllers
         }
 
 
+
+
         [HttpGet]
-        [Route("Cart")]
+        [Route("my-cart")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetCart()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -29,15 +33,21 @@ namespace Tarah.API.Controllers
             return Ok(response.Result);
         }
 
+
+
+
         [HttpPost]
         [Authorize]
         [Route("{productId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddToCart([FromRoute]Guid productId,[FromBody]int quantity)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var response = await service.AddToCart(productId, quantity, userId);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Error)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
@@ -45,25 +55,36 @@ namespace Tarah.API.Controllers
         }
 
 
-        [HttpPut]
+
+
+        [HttpPatch]
         [Authorize]
-        [Route("Modify/{productId:guid}")]
+        [Route("{productId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ModifyItemCount([FromRoute]Guid productId,[FromBody]int quantity)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
             var response = await service.ModifyProductCount(productId, quantity, userId);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Error)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
             return Ok(response.Result);
         }
 
+
+
+
         [HttpDelete]
         [Authorize]
-        [Route("Delete/{productId:guid}")]
+        [Route("{productId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteItem([FromRoute]Guid productId)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -72,12 +93,16 @@ namespace Tarah.API.Controllers
 
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
-            return Ok(response.Result);
+            return NoContent();
         }
+
+
+
 
         [HttpDelete]
         [Authorize]
-        [Route("Clear")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ClearCart()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -86,22 +111,30 @@ namespace Tarah.API.Controllers
 
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
-            return Ok(response.Result);
+            return NoContent();
         }
 
-        [HttpGet]
+
+
+
+        [HttpPost]
         [Authorize]
-        [Route("Checkout")]
+        [Route("my-cart/checkout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Checkout()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
             var response = await service.Checkout(userId);
 
-            if (response.Status == Status.Forbidden)
+            if (response.Status == Status.Error)
                 return BadRequest(response.Message);
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
+
             return Ok(response.Result);
         }
 

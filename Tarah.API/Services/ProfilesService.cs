@@ -16,6 +16,35 @@ namespace Tarah.API.Services
         }
         public async Task CreateProfiles(Guid id, string username)
         {
+            if (context.Customers.Any(c => c.Id == id) || context.Sellers.Any(c => c.Id == id))
+            {
+                var localUser = await context.LocalUsers.SingleOrDefaultAsync(u => u.Id == id);
+                localUser.Username = username;
+                await context.SaveChangesAsync();
+                return;
+            }
+
+
+            var customer = new CustomerProfile
+            {
+                Id = id,
+                Cart = new Cart()
+                {
+                    CustomerId = id,
+                },
+            };
+            var seller = new SellerProfile
+            {
+                Id = id,
+            };
+
+            await context.Customers.AddAsync(customer);
+            await context.Sellers.AddAsync(seller);
+            await context.LocalUsers.AddAsync(new LocalUser { Id = id, Username = username });
+            await context.SaveChangesAsync();
+        }
+        public async Task CreateProfiles(Guid id)
+        {
             if (context.Customers.Any(c => c.Id == id))
                 return;
             if (context.Sellers.Any(c => c.Id == id))
@@ -36,9 +65,10 @@ namespace Tarah.API.Services
 
             await context.Customers.AddAsync(customer);
             await context.Sellers.AddAsync(seller);
-            await context.LocalUsers.AddAsync(new LocalUser { Id = id, Username = username });
+            await context.LocalUsers.AddAsync(new LocalUser { Id = id });
             await context.SaveChangesAsync();
         }
+
 
         public async Task DeleteProfiles(Guid id)
         {

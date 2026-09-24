@@ -18,7 +18,9 @@ namespace Tarah.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> AllOrders(int? pageNumber, int? pageSize)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> AllOrders([FromQuery] int? pageNumber, [FromQuery] int? pageSize)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var response = await service.AllOrders(userId, pageNumber ?? 1, pageSize ?? 10);
@@ -26,9 +28,15 @@ namespace Tarah.API.Controllers
             return Ok(response);
         }
 
+
+
+
         [HttpGet]
         [Authorize]
         [Route("{orderId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> OrderById(Guid orderId)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));

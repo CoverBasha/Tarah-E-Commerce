@@ -16,8 +16,12 @@ namespace Tarah.API.Controllers
         }
 
         [HttpGet]
-        [Route("{id:guid}/profile")]
-        public async Task<IActionResult> UserProfile(Guid id, int? pageNumber,int? pageSize)
+        [Route("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> UserProfile([FromRoute] Guid id, [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
         {
             var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -26,9 +30,9 @@ namespace Tarah.API.Controllers
             if (response.Status == Status.NotFound)
                 return NotFound(response.Message);
             if (response.Status == Status.Forbidden)
-                return BadRequest(response.Message);
-            if (response.Status == Status.Unauthorized)
                 return Forbid(response.Message);
+            if (response.Status == Status.Unauthorized)
+                return Unauthorized(response.Message);
 
             return Ok(response.Result);
         }

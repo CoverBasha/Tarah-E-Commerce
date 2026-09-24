@@ -4,7 +4,7 @@ namespace Tarah.API.Repositories
 {
     public interface IProductsRepository
     {
-        public Task<PagedResult<Product>> GetProductsAsync(Guid? categoryId, int page, int pageSize);
+        public Task<PagedResult<Product>> GetProductsAsync(int page, int pageSize);
         public Task<PagedResult<Product>> ProductsByUserAsync(Guid userId, int page, int pageSize);
         public Task<Product>? GetByIdAsync(Guid Id);
         public Task<Product> AddProductAsync(Product product);

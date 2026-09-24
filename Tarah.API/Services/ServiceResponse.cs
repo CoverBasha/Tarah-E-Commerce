@@ -7,5 +7,5 @@
         public string Message { get; set; }
     }
 
-    public enum Status { Success, Forbidden, NotFound, Unauthorized }
+    public enum Status { Success, Error, Forbidden, NotFound, Unauthorized, ServerError }
 }

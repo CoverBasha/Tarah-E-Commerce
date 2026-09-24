@@ -15,21 +15,20 @@ namespace Tarah.API.Repositories
             this.context = context;
         }
 
-        public async Task<PagedResult<Product>> GetProductsAsync(Guid? categoryId, int page, int pageSize)
+        public async Task<PagedResult<Product>> GetProductsAsync(int page, int pageSize)
         {
-            IQueryable<Product> query = context.Products;
-
-            if (categoryId != null)
-                query = query.Where(c => c.Categories.Any(i => i.CategoryId == categoryId));
-
-            decimal pages = await query.CountAsync();
+            decimal pages = await context.Products.CountAsync();
             pages /= pageSize;
 
-            query = query.Skip((page - 1) * pageSize).Take(pageSize).Include(c => c.Categories).ThenInclude(c => c.Category);
+            var result = await context.Products
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(c => c.Categories)
+                .ThenInclude(c => c.Category).ToListAsync();
 
             return new PagedResult<Product>
             {
-                Items = await query.ToListAsync(),
+                Items = result,
                 TotalPages = (int)Math.Ceiling(pages)
             };
         }

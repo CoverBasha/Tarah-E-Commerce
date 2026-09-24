@@ -3,9 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using Tarah.API.Models.Domain;
 using Tarah.API.Models.DTOs;
 using Tarah.API.Repositories;
-using Tarah.API.Services;
 
-namespace Tarah.API.Service
+namespace Tarah.API.Services
 {
     public class ProductsService
     {
@@ -22,12 +21,12 @@ namespace Tarah.API.Service
             this.mapper = mapper;
         }
 
-        public async Task<ServiceResponse<ListProductsDto>> AllProductsAsync(Guid? categoryId,int page, int pageSize)
+        public async Task<ServiceResponse<ListProductsDto>> AllProductsAsync(int page, int pageSize)
         {
             page = Math.Max(page, 1);
             pageSize = Math.Min(pageSize, 20);
 
-            var result = await productsRepository.GetProductsAsync(categoryId, page, pageSize);
+            var result = await productsRepository.GetProductsAsync(page, pageSize);
 
             return new ServiceResponse<ListProductsDto>()
             {
@@ -57,13 +56,13 @@ namespace Tarah.API.Service
             if (dto.Price < dto.PriceAfterSale)
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Price after sale can't be higher than price"
                 };
             if (dto.CategoryIds.IsNullOrEmpty())
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Product should have atleast one category"
                 };
 
@@ -71,7 +70,7 @@ namespace Tarah.API.Service
             
             product.SellerId = userId;
 
-            var categories = await categoriesRepository.GetByIds(dto.CategoryIds);
+            var categories = await categoriesRepository.ListCategoriesIds(dto.CategoryIds);
             if (!categories.Any())
                 return new ServiceResponse<ProductDto>
                 {
@@ -91,7 +90,7 @@ namespace Tarah.API.Service
                 if (!validation.Result)
                     return new ServiceResponse<ProductDto>
                     {
-                        Status = Status.Forbidden,
+                        Status = validation.Status,
                         Message = validation.Message
                     };
             }
@@ -118,7 +117,7 @@ namespace Tarah.API.Service
 
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = ex.Message
                 };
             }
@@ -131,7 +130,7 @@ namespace Tarah.API.Service
                 } :
                 new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Something went wrong"
                 };
         }
@@ -141,7 +140,7 @@ namespace Tarah.API.Service
             if (dto.Price < dto.PriceAfterSale)
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Price after sale can't be higher than price"
                 };
 
@@ -156,19 +155,19 @@ namespace Tarah.API.Service
             if (productInDb.SellerId != userId)
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Unauthorized,
+                    Status = Status.Forbidden,
                     Message = "You don't own this product"
                 };
             if (dto.CategoryIds.IsNullOrEmpty())
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Product should have atleast one category"
                 };
 
             mapper.Map(dto, productInDb);
 
-            var categories = await categoriesRepository.GetByIds(dto.CategoryIds);
+            var categories = await categoriesRepository.ListCategoriesIds(dto.CategoryIds);
             if (!categories.Any())
                 return new ServiceResponse<ProductDto>
                 {
@@ -197,7 +196,7 @@ namespace Tarah.API.Service
             foreach (var name in toAdd)
             {
                 var validation = isValidImage(incomingFilesByName[name]);
-                if (validation.Status == Status.Forbidden)
+                if (validation.Status != Status.Success)
                     return new ServiceResponse<ProductDto>
                     {
                         Status = validation.Status,
@@ -224,7 +223,7 @@ namespace Tarah.API.Service
 
                 return new ServiceResponse<ProductDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = ex.Message
                 };
             }
@@ -258,7 +257,7 @@ namespace Tarah.API.Service
             if (product.SellerId != userId)
                 return new ServiceResponse<bool>
                 {
-                    Status = Status.Unauthorized,
+                    Status = Status.Forbidden,
                     Message = "You don't own this product"
                 };
 
@@ -276,7 +275,7 @@ namespace Tarah.API.Service
             if (file.Length > 5242880)
                 return new ServiceResponse<bool>()
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "Image larger than 5MB"
                 };
 
@@ -286,7 +285,7 @@ namespace Tarah.API.Service
             if (!supported.Any(item => item.Equals(extension, StringComparison.OrdinalIgnoreCase)))
                 return new ServiceResponse<bool>()
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.Error,
                     Message = "File not supported, only .jpg, .png, .jpeg"
                 };
 

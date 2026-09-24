@@ -17,9 +17,32 @@ namespace Tarah.API.Repositories
             return await context.Categories.ToListAsync();
         }
 
-        public async Task<List<Category>> GetByIds(IEnumerable<Guid> ids)
+        public Task<Category> CategoryById(Guid id)
+        {
+            return context.Categories.SingleOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<List<Category>> ListCategoriesIds(IEnumerable<Guid> ids)
         {
             return await context.Categories.Where(c => ids.Contains(c.Id)).ToListAsync();
         }
+
+        public Task<PagedResult<Product>> GetProductsByCategoryAsync(Guid categoryId, int page, int pageSize)
+        {
+            IQueryable<Product> query = context.Products;
+            query = query.Where(p => p.Categories.Any(c => c.CategoryId == categoryId));
+            decimal pages = query.Count();
+            pages /= pageSize;
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+
+            return Task.FromResult(new PagedResult<Product>
+            {
+                Items = query.Include(c => c.Categories)
+                .ThenInclude(c => c.Category).ToList(),
+                TotalPages = (int)Math.Ceiling(pages)
+            });
+        }
+
     }
 }

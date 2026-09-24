@@ -39,7 +39,7 @@ namespace Tarah.API.Services
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{HOST}/api/Users/profile");
 
-            var token = accessor.HttpContext?.Request.Headers["Authorization"].ToString();
+            var token = accessor.HttpContext?.Request.Headers.Authorization.ToString();
 
             if (!string.IsNullOrWhiteSpace(token))
                 request.Headers.Authorization = AuthenticationHeaderValue.Parse(token);
@@ -73,7 +73,7 @@ namespace Tarah.API.Services
             if (dto is null)
                 return new ServiceResponse<UserDto>
                 {
-                    Status = Status.Forbidden,
+                    Status = Status.ServerError,
                     Message = "Invalid response"
                 };
 

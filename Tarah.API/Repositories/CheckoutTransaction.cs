@@ -16,25 +16,25 @@ namespace Tarah.API.Repositories
 
         public async Task<Order> Execute(Guid userId)
         {
-            var user = await context.Customers.Include(o=>o.PastOrders).SingleOrDefaultAsync(c => c.Id == userId);
+            var user = await context.Customers.Include(o => o.PastOrders).SingleOrDefaultAsync(c => c.Id == userId);
             if (user is null)
-                throw new Exception("user doesn't exist");
+                throw new NotFoundException("user doesn't exist");
 
             var cart = await context.Carts
                 .Include(c => c.Items)
                 .ThenInclude(i => i.Product).SingleOrDefaultAsync(c => c.CustomerId == userId);
 
             if (cart.Items.IsNullOrEmpty())
-                throw new Exception("Cart is empty");
+                throw new InvalidOperationException("Cart is empty");
 
             foreach (var item in cart.Items)
             {
                 var product = await context.Products.SingleOrDefaultAsync(p => p.Id == item.ProductId);
                 if (product == null)
-                    throw new Exception("Product not found");
+                    throw new NotFoundException("Product not found");
 
                 if (product.Stock < item.Quantity)
-                    throw new Exception("Quantity exceeds stock");
+                    throw new InvalidOperationException("Quantity exceeds stock");
 
                 product.Stock -= item.Quantity;
             }
@@ -63,5 +63,10 @@ namespace Tarah.API.Repositories
 
             return order;
         }
+
+        public class NotFoundException(string message) : Exception(message)
+        {
+        }
     }
 }
+
